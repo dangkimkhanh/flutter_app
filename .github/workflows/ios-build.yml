@@ -11,8 +11,8 @@ jobs:
     runs-on: macos-latest
 
     steps:
-      - name: Checkout source code
-        uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Install Flutter
         uses: subosito/flutter-action@v2
@@ -22,14 +22,19 @@ jobs:
       - name: Flutter pub get
         run: flutter pub get
 
-      - name: Enable iOS platform
-        run: flutter config --enable-ios
+      - name: Ensure iOS folder exists
+        run: flutter create .
 
-      - name: Build iOS IPA (no signing)
+      - name: Install CocoaPods
+        run: |
+          cd ios
+          pod install --repo-update
+
+      - name: Build IPA (no signing)
         run: flutter build ipa --no-codesign
 
       - name: Upload IPA artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: flutter-ios-ipa
           path: build/ios/ipa/*.ipa
