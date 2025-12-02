@@ -1,40 +1,68 @@
 name: Build iOS IPA (Flutter)
 
 on:
-  workflow_dispatch:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   build-ios:
     runs-on: macos-latest
 
     steps:
-      - name: Checkout code
+      # Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
 
+      # Install Flutter
       - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
 
-      - name: Flutter pub get
+      # Get dependencies
+      - name: Flutter Pub Get
         run: flutter pub get
 
-      - name: Ensure iOS folder exists
-        run: flutter create .
-
-      - name: Install CocoaPods
-        run: |
-          cd ios
-          pod install --repo-update
-
+      # Build iOS .xcarchive (no signing)
       - name: Build IPA (no signing)
         run: flutter build ipa --no-codesign
 
-      - name: Upload IPA artifact
+      # Export IPA manually (required for no-codesign)
+      - name: Export IPA
+        run: |
+          cd build/ios/archive
+
+          # Create export plist
+          cat > exportOptions.plist <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>ad-hoc</string>
+            <key>compileBitcode</key>
+            <false/>
+            <key>destination</key>
+            <string>export</string>
+            <key>signingStyle</key>
+            <string>manual</string>
+            <key>stripSwiftSymbols</key>
+            <true/>
+          </dict>
+          </plist>
+          EOF
+
+          # Export IPA from archive
+          xcodebuild -exportArchive \
+            -archivePath Runner.xcarchive \
+            -exportOptionsPlist exportOptions.plist \
+            -exportPath export
+
+      # Upload IPA artifact
+      - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
-          name: flutter-ios-ipa
-          path: build/ios/ipa/*.ipa
+          name: ios-ipa
+          path: build/ios/archive/export/*.ipa
