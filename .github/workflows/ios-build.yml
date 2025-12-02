@@ -1,4 +1,5 @@
-name: Build iOS IPA (Flutter)
+name: Build iOS Simulator (Flutter)
+
 on:
   push:
     branches:
@@ -6,43 +7,48 @@ on:
   workflow_dispatch:
 
 jobs:
-  ios:
+  ios-simulator:
     runs-on: macos-latest
+    
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v4
       
-      - name: Install Flutter
+      - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
+          cache: true
       
-      - name: Flutter pub get
+      - name: Get Flutter dependencies
         run: flutter pub get
       
-      - name: Build iOS (no codesign)
-        run: flutter build ios --release --no-codesign
+      - name: Build iOS for Simulator
+        run: flutter build ios --simulator --release
       
-      - name: Create IPA manually
+      - name: Create ZIP for Appetize.io
         run: |
-          # Tạo thư mục Payload
-          mkdir -p Payload
+          # Di chuyển vào thư mục build
+          cd build/ios/iphonesimulator
           
-          # Copy file .app vào Payload
-          cp -r build/ios/iphoneos/Runner.app Payload/
+          # Nén file .app
+          zip -r Runner-simulator.zip Runner.app
           
-          # Nén thành IPA
-          zip -r -y Runner.ipa Payload
-          
-          # Dọn dẹp
-          rm -rf Payload
+          # Di chuyển về root
+          mv Runner-simulator.zip ../../../
+          cd ../../../
           
           # Tạo thư mục output
           mkdir -p output
-          mv Runner.ipa output/
+          mv Runner-simulator.zip output/
+          
+          echo "✅ iOS Simulator build created successfully!"
+          echo "📦 File info:"
+          ls -lh output/
       
-      - name: Upload IPA
+      - name: Upload Simulator build
         uses: actions/upload-artifact@v4
         with:
-          name: ios-ipa
-          path: output/Runner.ipa
+          name: ios-simulator-appetize
+          path: output/Runner-simulator.zip
+          retention-days: 30
