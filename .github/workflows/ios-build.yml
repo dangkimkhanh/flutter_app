@@ -23,6 +23,12 @@ jobs:
       - name: Get Flutter dependencies
         run: flutter pub get
       
+      - name: Install CocoaPods dependencies
+        run: |
+          cd ios
+          pod install --repo-update
+          cd ..
+      
       - name: Build iOS for Simulator (Debug mode)
         run: flutter build ios --simulator --debug
       
