@@ -1,5 +1,4 @@
-name: Build iOS Simulator (Flutter)
-
+name: Build iOS IPA (Flutter)
 on:
   push:
     branches:
@@ -7,47 +6,43 @@ on:
   workflow_dispatch:
 
 jobs:
-  ios-simulator:
+  ios:
     runs-on: macos-latest
-    
     steps:
-      - name: Checkout repository
+      - name: Checkout repo
         uses: actions/checkout@v4
       
-      - name: Setup Flutter
+      - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
-          cache: true
       
-      - name: Get Flutter dependencies
+      - name: Flutter pub get
         run: flutter pub get
       
-      - name: Install CocoaPods dependencies
-        run: |
-          cd ios
-          pod install --repo-update
-          cd ..
+      - name: Build iOS (no codesign)
+        run: flutter build ios --release --no-codesign
       
-      - name: Build iOS for Simulator (Debug mode)
-        run: flutter build ios --simulator --debug
-      
-      - name: Create ZIP for Appetize.io
+      - name: Create IPA manually
         run: |
-          cd build/ios/iphonesimulator
-          zip -r Runner-simulator.zip Runner.app
-          mv Runner-simulator.zip ../../../
-          cd ../../../
+          # Tạo thư mục Payload
+          mkdir -p Payload
           
+          # Copy file .app vào Payload
+          cp -r build/ios/iphoneos/Runner.app Payload/
+          
+          # Nén thành IPA
+          zip -r -y Runner.ipa Payload
+          
+          # Dọn dẹp
+          rm -rf Payload
+          
+          # Tạo thư mục output
           mkdir -p output
-          mv Runner-simulator.zip output/
-          
-          echo "✅ iOS Simulator build created!"
-          ls -lh output/
+          mv Runner.ipa output/
       
-      - name: Upload Simulator build
+      - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
-          name: ios-simulator-appetize
-          path: output/Runner-simulator.zip
-          retention-days: 30
+          name: ios-ipa
+          path: output/Runner.ipa
