@@ -23,27 +23,20 @@ jobs:
       - name: Get Flutter dependencies
         run: flutter pub get
       
-      - name: Build iOS for Simulator
-        run: flutter build ios --simulator --release
+      - name: Build iOS for Simulator (Debug mode)
+        run: flutter build ios --simulator --debug
       
       - name: Create ZIP for Appetize.io
         run: |
-          # Di chuyển vào thư mục build
           cd build/ios/iphonesimulator
-          
-          # Nén file .app
           zip -r Runner-simulator.zip Runner.app
-          
-          # Di chuyển về root
           mv Runner-simulator.zip ../../../
           cd ../../../
           
-          # Tạo thư mục output
           mkdir -p output
           mv Runner-simulator.zip output/
           
-          echo "✅ iOS Simulator build created successfully!"
-          echo "📦 File info:"
+          echo "✅ iOS Simulator build created!"
           ls -lh output/
       
       - name: Upload Simulator build
