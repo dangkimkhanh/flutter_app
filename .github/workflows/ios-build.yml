@@ -1,5 +1,4 @@
 name: Build iOS IPA (Flutter)
-
 on:
   push:
     branches:
@@ -9,58 +8,41 @@ on:
 jobs:
   ios:
     runs-on: macos-latest
-
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
-
+      
       - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
-
+      
       - name: Flutter pub get
         run: flutter pub get
-
-      - name: Build iOS archive
-        run: flutter build ipa --no-codesign
-
-      - name: Export IPA (unsigned)
+      
+      - name: Build iOS (no codesign)
+        run: flutter build ios --release --no-codesign
+      
+      - name: Create IPA manually
         run: |
-          cd build/ios/archive
-
-          # Create export plist (no team required)
-          cat > exportOptions.plist <<EOF
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-            <key>method</key>
-            <string>development</string>
-
-            <key>signingStyle</key>
-            <string>manual</string>
-
-            <key>compileBitcode</key>
-            <false/>
-
-            <key>stripSwiftSymbols</key>
-            <true/>
-
-            <key>destination</key>
-            <string>export</string>
-          </dict>
-          </plist>
-          EOF
-
-          xcodebuild -exportArchive \
-            -archivePath Runner.xcarchive \
-            -exportOptionsPlist exportOptions.plist \
-            -exportPath export \
-            CODE_SIGNING_ALLOWED=NO
-
+          # Tạo thư mục Payload
+          mkdir -p Payload
+          
+          # Copy file .app vào Payload
+          cp -r build/ios/iphoneos/Runner.app Payload/
+          
+          # Nén thành IPA
+          zip -r -y Runner.ipa Payload
+          
+          # Dọn dẹp
+          rm -rf Payload
+          
+          # Tạo thư mục output
+          mkdir -p output
+          mv Runner.ipa output/
+      
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
           name: ios-ipa
-          path: build/ios/archive/export/*.ipa
+          path: output/Runner.ipa
