@@ -1,0 +1,35 @@
+name: Build iOS IPA (Flutter)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-ios:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v3
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Flutter pub get
+        run: flutter pub get
+
+      - name: Enable iOS platform
+        run: flutter config --enable-ios
+
+      - name: Build iOS IPA (no signing)
+        run: flutter build ipa --no-codesign
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: flutter-ios-ipa
+          path: build/ios/ipa/*.ipa
