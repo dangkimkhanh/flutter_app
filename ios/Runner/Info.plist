@@ -57,9 +57,5 @@
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Ứng dụng cần quyền để lưu ảnh vào thư viện</string>
 	
-	<!-- Microphone Permission (nếu cần) -->
-	<key>NSMicrophoneUsageDescription</key>
-	<string>Ứng dụng cần quyền truy cập microphone</string>
-	
 </dict>
 </plist>
